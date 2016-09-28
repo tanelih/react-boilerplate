@@ -1,104 +1,94 @@
 /**
- * app.js
+ * @file
  *
- * This is the entry file for the application, only setup and boilerplate
- * code.
+ * Application entrypoint.
  */
-import 'babel-polyfill';
 
-/* eslint-disable import/no-unresolved */
-// Load the manifest.json file and the .htaccess file
-import '!file?name=[name].[ext]!./manifest.json';
-import 'file?name=[name].[ext]!./.htaccess';
-/* eslint-enable import/no-unresolved */
+import 'sanitize.css/sanitize.css'
 
-// Import all the third party stuff
-import React from 'react';
-import ReactDOM from 'react-dom';
-import { Provider } from 'react-redux';
-import { applyRouterMiddleware, Router, browserHistory } from 'react-router';
-import { syncHistoryWithStore } from 'react-router-redux';
-import { useScroll } from 'react-router-scroll';
-import LanguageProvider from 'containers/LanguageProvider';
-import configureStore from './store';
+import 'babel-polyfill'
 
-// Import i18n messages
-import { translationMessages } from './i18n';
+import React    from 'react'
+import ReactDOM from 'react-dom'
 
-// Import the CSS reset, which HtmlWebpackPlugin transfers to the build folder
-import 'sanitize.css/sanitize.css';
+import { Provider }                                      from 'react-redux'
+import { applyRouterMiddleware, Router, browserHistory } from 'react-router'
+import { syncHistoryWithStore }                          from 'react-router-redux'
+import { useScroll }                                     from 'react-router-scroll'
 
-// Create redux store with history
-// this uses the singleton browserHistory provided by react-router
-// Optionally, this could be changed to leverage a created history
-// e.g. `const browserHistory = useRouterHistory(createBrowserHistory)();`
-const initialState = {};
-const store = configureStore(initialState, browserHistory);
+import createStore from './store'
 
-// Sync history and store, as the react-router-redux reducer
-// is under the non-default key ("routing"), selectLocationState
-// must be provided for resolving how to retrieve the "route" in the state
-import { selectLocationState } from 'containers/App/selectors';
+import App              from 'containers/App'
+import LanguageProvider from 'containers/LanguageProvider'
+
+import { translationMessages } from './i18n'
+import { selectLocationState } from 'containers/App/selectors'
+
+/**
+ * The redux store.
+ *
+ * @type {Object}
+ */
+const store = createStore({ }, browserHistory)
+
+/**
+ * Browser history with hooks to sync into the redux store.
+ *
+ * @type {Object}
+ */
 const history = syncHistoryWithStore(browserHistory, store, {
-  selectLocationState: selectLocationState(),
-});
+  selectLocationState: selectLocationState()
+})
 
-// Set up the router, wrapping all Routes in the App component
-import App from 'containers/App';
-import createRoutes from './routes';
+/**
+ * The 'root' route for 'react-router'.
+ *
+ * @type {Object}
+ */
 const rootRoute = {
-  component: App,
-  childRoutes: createRoutes(store),
-};
+  component:   App,
+  childRoutes: require('./routes').default(store),
+}
 
-
-const render = (translatedMessages) => {
-  ReactDOM.render(
+/**
+ * Render the application.
+ *
+ * @param   {Object} messages - Application translations.
+ * @returns {JSX}             - Rendered application.
+ */
+const render = messages => {
+  const application = (
     <Provider store={store}>
-      <LanguageProvider messages={translatedMessages}>
+      <LanguageProvider messages={messages}>
         <Router
           history={history}
           routes={rootRoute}
-          render={
-            // Scroll to top when going to a new page, imitating default browser
-            // behaviour
-            applyRouterMiddleware(useScroll())
-          }
+          render={applyRouterMiddleware(useScroll())}
         />
       </LanguageProvider>
-    </Provider>,
-    document.getElementById('app')
-  );
-};
+    </Provider>
+  )
+  ReactDOM.render(application, document.getElementById('app'))
+}
 
-
-// Hot reloadable translation json files
+// hot reloading translations
 if (module.hot) {
-  // modules.hot.accept does not accept dynamic dependencies,
-  // have to be constants at compile-time
-  module.hot.accept('./i18n', () => {
-    render(translationMessages);
-  });
+  module.hot.accept('./i18n', () => render(translationMessages))
 }
 
-// Chunked polyfill for browsers without Intl support
+// make sure we have 'intl' capabilities before we render the application
 if (!window.Intl) {
-  (new Promise((resolve) => {
-    resolve(System.import('intl'));
-  }))
-    .then(() => Promise.all([
-      System.import('intl/locale-data/jsonp/de.js'),
-    ]))
-    .then(() => render(translationMessages))
-    .catch((err) => {
-      throw err;
-    });
-} else {
-  render(translationMessages);
+  new Promise(resolve => resolve(System.import('intl')))
+    .then(() =>
+      Promise.all([ System.import('intl/locale-data/jsonp/de.js') ]))
+    .then(() =>
+      render(translationMessages))
+    .catch((err) => { throw err })
+}
+else {
+  render(translationMessages)
 }
 
-// Install ServiceWorker and AppCache in the end since
-// it's not most important operation and if main code fails,
-// we do not want it installed
-import { install } from 'offline-plugin/runtime';
-install();
+// if everything went better than expected, enable offline capabilities
+require('offline-plugin/runtime').install()
+
