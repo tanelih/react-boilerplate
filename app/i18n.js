@@ -1,30 +1,34 @@
+import { addLocaleData } from 'react-intl'
+
+import enLocaleData          from 'react-intl/locale-data/en'
+import enTranslationMessages from './translations/en.json'
+
+// add our 'locale data' to 'react-intl'
+addLocaleData(enLocaleData)
+
 /**
- * i18n.js
+ * Format the translations to something usable by us.
  *
- * This will setup the i18n language files and locale data for your app.
- *
+ * @param   {Array<Object>} messages - Raw translations.
+ * @returns {Object}                 - Map of translations.
  */
-import { addLocaleData } from 'react-intl';
+const formatTranslationMessages = messages =>
+  messages.reduce((formatted, m) =>
+    Object.assign({ }, formatted, { [m.id]: m.message || m.defaultMessage }), { })
 
-import enLocaleData from 'react-intl/locale-data/en';
+/**
+ * Available locales in the application.
+ *
+ * @type {Array<String>}
+ */
+export const appLocales = [ 'en' ]
 
-export const appLocales = [
-  'en',
-];
-
-import enTranslationMessages from './translations/en.json';
-
-addLocaleData(enLocaleData);
-
-const formatTranslationMessages = (messages) => {
-  const formattedMessages = {};
-  for (const message of messages) {
-    formattedMessages[message.id] = message.message || message.defaultMessage;
-  }
-
-  return formattedMessages;
-};
-
+/**
+ * Translations.
+ *
+ * @type {Object}
+ */
 export const translationMessages = {
   en: formatTranslationMessages(enTranslationMessages),
-};
+}
+

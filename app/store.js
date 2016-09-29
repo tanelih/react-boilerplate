@@ -1,51 +1,37 @@
+import { fromJS }                                from 'immutable'
+import { createStore, applyMiddleware, compose } from 'redux'
+import { routerMiddleware }                      from 'react-router-redux'
+
+import createReducer from './reducers'
+
+
+// if available, use 'redux-devtools'
+const devtools = window.devToolsExtension || (() => null)
+
 /**
- * Create the store with asynchronously loaded reducers
+ * Create the redux store with given configuration.
+ *
+ * @param   {Object} initialState - Initial state for the store.
+ * @param   {Object} history      - History to sync with the store.
+ * @returns {Object}              - The redux store.
  */
-
-import { createStore, applyMiddleware, compose } from 'redux';
-import { fromJS } from 'immutable';
-import { routerMiddleware } from 'react-router-redux';
-import createSagaMiddleware from 'redux-saga';
-import createReducer from './reducers';
-
-const sagaMiddleware = createSagaMiddleware();
-const devtools = window.devToolsExtension || (() => (noop) => noop);
-
 export default function configureStore(initialState = {}, history) {
-  // Create the store with two middlewares
-  // 1. sagaMiddleware: Makes redux-sagas work
-  // 2. routerMiddleware: Syncs the location/URL path to the state
-  const middlewares = [
-    sagaMiddleware,
-    routerMiddleware(history),
-  ];
-
   const enhancers = [
-    applyMiddleware(...middlewares),
+    applyMiddleware(...[
+      routerMiddleware(history),
+    ]),
     devtools(),
-  ];
-
+  ]
   const store = createStore(
     createReducer(),
     fromJS(initialState),
-    compose(...enhancers)
-  );
+    compose(...enhancers))
 
-  // Create hook for async sagas
-  store.runSaga = sagaMiddleware.run;
-
-  // Make reducers hot reloadable, see http://mxs.is/googmo
-  /* istanbul ignore next */
   if (module.hot) {
-    System.import('./reducers').then((reducerModule) => {
-      const createReducers = reducerModule.default;
-      const nextReducers = createReducers(store.asyncReducers);
-
-      store.replaceReducer(nextReducers);
-    });
+    System.import('./reducers')
+      .then(reducer => store.replaceReducer(reducer.default()))
+      .catch(err => console.error('Failed to replace reducers:', err))
   }
-
-  // Initialize it with no other reducers
-  store.asyncReducers = {};
-  return store;
+  return store
 }
+
