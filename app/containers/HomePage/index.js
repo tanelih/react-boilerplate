@@ -11,9 +11,14 @@ import messages from './messages';
 export default class HomePage extends React.Component {
   render() {
     return (
-      <h1>
-        <FormattedMessage {...messages.header} />
-      </h1>
+      <section className="container--home">
+        <h1>
+          <FormattedMessage {...messages.header} />
+        </h1>
+        <p>
+          Foo Bar
+        </p>
+      </section>
     )
   }
 }

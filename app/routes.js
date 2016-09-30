@@ -1,3 +1,5 @@
+import { getInjectors } from 'utils/injectors'
+
 /**
  * Log errors related to dynamically loading the pages.
  *
@@ -20,6 +22,8 @@ const loadModule = cb => module => cb(null, module.default)
  * @returns {Array<Object>}       - Application routes.
  */
 export default function createRoutes(store) {
+  const { injectReducer } = getInjectors(store)
+
   return [
     {
       path: '/',

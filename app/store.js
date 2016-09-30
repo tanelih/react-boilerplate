@@ -2,11 +2,11 @@ import { fromJS }                                from 'immutable'
 import { createStore, applyMiddleware, compose } from 'redux'
 import { routerMiddleware }                      from 'react-router-redux'
 
-import createReducer from './reducers'
+import createReducer from 'reducers'
 
 
 // if available, use 'redux-devtools'
-const devtools = window.devToolsExtension || (() => null)
+const devtools = window.devToolsExtension || (() => noop => noop)
 
 /**
  * Create the redux store with given configuration.
@@ -22,16 +22,18 @@ export default function configureStore(initialState = {}, history) {
     ]),
     devtools(),
   ]
+
   const store = createStore(
-    createReducer(),
-    fromJS(initialState),
-    compose(...enhancers))
+    createReducer(), fromJS(initialState), compose(...enhancers))
 
   if (module.hot) {
-    System.import('./reducers')
-      .then(reducer => store.replaceReducer(reducer.default()))
-      .catch(err => console.error('Failed to replace reducers:', err))
+    System.import('reducers')
+      .then(reducer =>
+        store.replaceReducer(reducer.default(store.asyncReducers)))
+      .catch(err =>
+        console.error('Failed to replace reducers:', err))
   }
-  return store
+
+  return { ...store, asyncReducers: {} }
 }
 

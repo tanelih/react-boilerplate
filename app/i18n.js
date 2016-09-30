@@ -1,7 +1,7 @@
 import { addLocaleData } from 'react-intl'
 
 import enLocaleData          from 'react-intl/locale-data/en'
-import enTranslationMessages from './translations/en.json'
+import enTranslationMessages from 'translations/en.json'
 
 // add our 'locale data' to 'react-intl'
 addLocaleData(enLocaleData)
@@ -14,7 +14,7 @@ addLocaleData(enLocaleData)
  */
 const formatTranslationMessages = messages =>
   messages.reduce((formatted, m) =>
-    Object.assign({ }, formatted, { [m.id]: m.message || m.defaultMessage }), { })
+    Object.assign({}, formatted, { [m.id]: m.message || m.defaultMessage }), {})
 
 /**
  * Available locales in the application.

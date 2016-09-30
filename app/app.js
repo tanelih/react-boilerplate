@@ -16,12 +16,15 @@ import { applyRouterMiddleware, Router, browserHistory } from 'react-router'
 import { syncHistoryWithStore }                          from 'react-router-redux'
 import { useScroll }                                     from 'react-router-scroll'
 
-import createStore from './store'
+import { install } from 'offline-plugin/runtime'
+
+import configureStore  from 'store'
+import configureRoutes from 'routes'
 
 import App              from 'containers/App'
 import LanguageProvider from 'containers/LanguageProvider'
 
-import { translationMessages } from './i18n'
+import { translationMessages } from 'i18n'
 import { selectLocationState } from 'containers/App/selectors'
 
 /**
@@ -29,7 +32,7 @@ import { selectLocationState } from 'containers/App/selectors'
  *
  * @type {Object}
  */
-const store = createStore({ }, browserHistory)
+const store = configureStore({ }, browserHistory)
 
 /**
  * Browser history with hooks to sync into the redux store.
@@ -37,7 +40,7 @@ const store = createStore({ }, browserHistory)
  * @type {Object}
  */
 const history = syncHistoryWithStore(browserHistory, store, {
-  selectLocationState: selectLocationState()
+  selectLocationState: selectLocationState(),
 })
 
 /**
@@ -47,7 +50,7 @@ const history = syncHistoryWithStore(browserHistory, store, {
  */
 const rootRoute = {
   component:   App,
-  childRoutes: require('./routes').default(store),
+  childRoutes: configureRoutes(store),
 }
 
 /**
@@ -80,15 +83,17 @@ if (module.hot) {
 if (!window.Intl) {
   new Promise(resolve => resolve(System.import('intl')))
     .then(() =>
-      Promise.all([ System.import('intl/locale-data/jsonp/de.js') ]))
+      Promise.all([
+        System.import('intl/locale-data/jsonp/en.js'),
+      ]))
     .then(() =>
       render(translationMessages))
-    .catch((err) => { throw err })
-}
-else {
+    .catch(err => {
+      throw err
+    })
+} else {
   render(translationMessages)
 }
 
 // if everything went better than expected, enable offline capabilities
-require('offline-plugin/runtime').install()
-
+install()

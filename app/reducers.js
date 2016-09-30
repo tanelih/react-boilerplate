@@ -1,48 +1,44 @@
-/**
- * Combine all reducers in this file and export the combined reducers.
- * If we were to do this in store.js, reducers wouldn't be hot reloadable.
- */
+import { fromJS }          from 'immutable'
+import { combineReducers } from 'redux-immutable'
+import { LOCATION_CHANGE } from 'react-router-redux'
 
-import { combineReducers } from 'redux-immutable';
-import { fromJS } from 'immutable';
-import { LOCATION_CHANGE } from 'react-router-redux';
-import languageProviderReducer from 'containers/LanguageProvider/reducer';
+import languageProviderReducer from 'containers/LanguageProvider/reducer'
 
-/*
- * routeReducer
- *
- * The reducer merges route location changes into our immutable state.
- * The change is necessitated by moving to react-router-redux@4
- *
- */
-
-// Initial routing state
-const routeInitialState = fromJS({
-  locationBeforeTransitions: null,
-});
 
 /**
- * Merge route into the global application state
+ * Initial state for the ruter.
+ *
+ * @type {Object}
+ */
+const routeInitialState = fromJS({ locationBeforeTransitions: null })
+
+/**
+ * Reducer function for routes.
+ *
+ * @param   {Object} state  - Previous state.
+ * @param   {Object} action - Flux standard action.
+ * @returns {Object}        - The next state.
  */
 function routeReducer(state = routeInitialState, action) {
   switch (action.type) {
-    /* istanbul ignore next */
     case LOCATION_CHANGE:
-      return state.merge({
-        locationBeforeTransitions: action.payload,
-      });
+      return state.merge({ locationBeforeTransitions: action.payload })
     default:
-      return state;
+      return state
   }
 }
 
 /**
  * Creates the main reducer with the asynchronously loaded ones
+ *
+ * @param   {Object}   reducers - Additional reducers.
+ * @returns {Function}          - The combined reducer function.
  */
-export default function createReducer(asyncReducers) {
+export default function createReducer(reducers) {
   return combineReducers({
-    route: routeReducer,
+    ...reducers,
+    route:    routeReducer,
     language: languageProviderReducer,
-    ...asyncReducers,
-  });
+  })
 }
+
